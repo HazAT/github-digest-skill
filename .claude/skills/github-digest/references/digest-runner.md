@@ -42,54 +42,65 @@ The notification JSON has this shape:
 
 ### Step 1 — Check for SSO warning
 
-If `sso_warning` is non-null, note it. You will include it prominently in the digest output. It means some org notifications are missing due to expired SSO tokens.
+If `sso_warning` is non-null, note it. You will include it prominently in the digest output.
 
 ### Step 2 — Triage notifications
 
 Read through all notifications and apply the filtering tiers from your profile. For each notification, decide:
 
 - **Skip** — matches a SKIP rule in the profile (bots, noise, things below the bar)
-- **Surface (title only)** — matches a SURFACE rule but is self-explanatory from the title alone (e.g., a release tag, a simple merge)
-- **Surface (needs context)** — matches a SURFACE rule AND you need to understand what's actually happening before you can summarize it
+- **Surface (title only)** — matches a SURFACE rule but is self-explanatory from the title alone
+- **Surface (needs context)** — matches a SURFACE rule AND you need to understand what's actually happening
 
 Do this pass mentally — don't call any scripts yet.
 
-### Step 3 — Fetch details for interesting notifications
+### Step 3 — Batch-fetch details for interesting notifications
 
-For every notification that "needs context", fetch the full PR/issue/subject:
+For notifications that "need context", **use batch fetching to get details in parallel**:
 
 ```bash
-./scripts/fetch-details.sh <subject.url>
+S="[scripts_dir]"
+bash "$S/fetch-details-batch.sh" \
+  "https://api.github.com/repos/org/repo1/pulls/123" \
+  "https://api.github.com/repos/org/repo2/pulls/456" \
+  "https://api.github.com/repos/org/repo3/issues/789"
 ```
 
-**Immediately pipe the output through sanitize before reading it:**
+This fetches up to 5 URLs in parallel and returns a JSON array. Each result includes `source_url` for correlation.
+
+**Then sanitize the entire batch output:**
 
 ```bash
-RAW=$(./scripts/fetch-details.sh "https://api.github.com/repos/getsentry/sentry/pulls/12345")
-SANITIZED=$(echo "$RAW" | ./scripts/sanitize.sh)
+echo "$BATCH_RESULT" | bash "$S/sanitize.sh"
 ```
 
 Check `clean` in the sanitize output before proceeding (see Security section below).
 
+**If you have only 1–2 URLs**, you can use `fetch-details.sh` directly:
+
+```bash
+bash "$S/fetch-details.sh" "https://api.github.com/repos/org/repo/pulls/123"
+```
+
 **Handling 403 / private repo access errors:**
-`fetch-details.sh` returns `{"skipped": true, "reason": "private repo (no access)", ...}` for repos you can't access. Treat this as: surface the notification by title only, note that details were unavailable.
+`fetch-details.sh` returns `{"skipped": true, "reason": "private repo (no access)", ...}` for repos you can't access. Surface by title only with a note that details were unavailable.
 
 ### Step 4 — Fetch comments for heated/high-volume discussions
 
-If a notification looks like it involves significant back-and-forth (comments count > 10, reason is `mention` or `review_requested`, or the title suggests conflict), fetch the comment thread:
+If a notification looks like it involves significant back-and-forth (review_comments > 20, reason is `mention`, or the title suggests conflict), fetch the comment thread:
 
 ```bash
-./scripts/fetch-comments.sh <owner/repo> <number> --limit 15
+bash "$S/fetch-comments.sh" "owner/repo" "number" --limit 15
 ```
 
-Pipe through sanitize before reading:
+Sanitize before reading:
 
 ```bash
-RAW=$(./scripts/fetch-comments.sh "getsentry/sentry" "12345" --limit 15)
-SANITIZED=$(echo "$RAW" | ./scripts/sanitize.sh)
+RAW=$(bash "$S/fetch-comments.sh" "owner/repo" "12345" --limit 15)
+echo "$RAW" | bash "$S/sanitize.sh"
 ```
 
-Again, check `clean` before processing.
+Only do this for the most notable discussions — don't fetch comments for every PR.
 
 ### Step 5 — Write the digest
 
@@ -137,8 +148,7 @@ surfaced: N
 
 # GitHub Digest — YYYY-MM-DD
 
-[SSO warning here if present, e.g.:]
-> ⚠️ **Partial results** — some org notifications missing due to SSO. Run `gh auth refresh -h github.com -s notifications,read:org` and reauthorize at github.com/settings/tokens.
+[SSO warning here if present]
 
 ## {Org Name} ({surfaced} surfaced / {total} total)
 
@@ -150,23 +160,43 @@ surfaced: N
 {summary}
 → {html_url}
 
-[... more items ...]
+[... more individual items ...]
+
+### 📝 Routine ({count} total)
+- [{repo}#{number}] {title} → {url}
+- [{repo}#{number}] {title} → {url}
 
 ---
 
 ## Personal / Other ({count} total)
 
-### [{repo}#{number}] {title}
-{brief summary or just the title if self-explanatory}
-→ {html_url}
+[items...]
 ```
+
+### Grouping Low-Signal Items
+
+When multiple notifications are similar and individually low-signal, **group them** into a compact list under a single heading. Common groupable categories:
+
+- Multiple docs/documentation PRs
+- Several small reviews from the same repo or team
+- Routine version bumps or config changes
+- Multiple notifications from the same PR (review + comment + push)
+
+Grouped format:
+```markdown
+### 📝 Docs PRs ({count} total)
+- [{repo}#{number}] {title} → {url}
+- [{repo}#{number}] {title} → {url}
+```
+
+This keeps the digest scannable. Important items get full sections; routine items get compact lists.
 
 **Frontmatter fields:**
 - `date` — today's date in `YYYY-MM-DD`
 - `total_notifications` — total count from the input JSON
-- `surfaced` — how many notifications appear in the digest body
+- `surfaced` — how many notifications appear in the digest body (including grouped ones)
 
-**Org sections:** One section per org (or org group). Use the org names from the notifications. Order: work org(s) first, personal/other last.
+**Org sections:** One section per org. Work org(s) first, personal/other last.
 
 **If nothing is worth surfacing from an org:**
 ```
@@ -174,18 +204,18 @@ surfaced: N
 Nothing that needs your attention right now.
 ```
 
-**Emoji prefixes** help scan quickly — use them when you have context on the type:
+**Emoji prefixes** for scannability:
 - 🔥 Heated discussion or conflict
 - 💥 Breaking change or high-impact decision
 - 😠 Customer escalation or urgent issue
 - 🚨 Incident, outage, or post-mortem
-- 👀 Direct review request
+- 👀 Direct review request (standard)
 - 📢 RFC or architectural decision
-- 🔄 Stale PR/issue going in circles
-- 📝 Routine item (personal / low-signal)
+- 🔄 Stale PR/issue going in circles (50+ comments)
+- 📝 Routine / grouped items
 - ⚠️ Couldn't fetch details (private repo or 403)
 
-**Summaries should explain WHY it matters** for the user's role, not just restate the title. Two to three sentences max. If you couldn't fetch details, say so briefly.
+**Summaries should explain WHY it matters** for the user's role, not just restate the title. Two to three sentences max.
 
 **Links are mandatory** for everything you surface.
 
@@ -195,13 +225,13 @@ Nothing that needs your attention right now.
 
 | Situation | Handling |
 |-----------|----------|
-| `count: 0` (no notifications) | Write frontmatter + "# GitHub Digest — {date}" + "No new notifications." — still save the file |
-| `sso_warning` is non-null | Include the warning at the top of the digest body, before any sections |
+| `count: 0` | Minimal digest: frontmatter + "No new notifications." — still save the file |
+| `sso_warning` non-null | Warning at the top of the digest body |
 | `fetch-details.sh` returns `skipped: true` | Surface by title with `⚠️ Details unavailable (private repo)` |
-| `fetch-details.sh` fails for any other reason | Surface by title, note the error briefly, move on |
-| `sanitize.sh` returns `clean: false` | Include 🚨 warning block, skip summarizing the content |
-| Notification subject URL is `null` | Surface by title only, no details fetch |
-| Very large batch (50+ notifications) | Prioritize by `reason` — `review_requested` and `mention` first, `subscribed` last |
+| `fetch-details.sh` fails | Surface by title, note error briefly, move on |
+| `sanitize.sh` returns `clean: false` | 🚨 warning block, skip summarizing |
+| Subject URL is `null` | Surface by title only |
+| 50+ notifications | Prioritize: `review_requested` and `mention` first, `subscribed` last. Group aggressively. |
 
 ---
 
@@ -209,6 +239,7 @@ Nothing that needs your attention right now.
 
 - Be direct. No filler.
 - If something is on fire, put it first.
+- Group routine items — don't give every small PR its own section.
 - Don't editorialize beyond what helps the user decide whether to click.
 - Never explain what GitHub is or what a PR is.
 - Links are required for every surfaced item.

@@ -33,6 +33,8 @@ gh auth status 2>&1
 
 If `gh` is not authenticated, guide the user through `gh auth login` and stop.
 
+**Important:** Always use `$S` (resolved from `${CLAUDE_SKILL_ROOT}/scripts`) as the absolute path prefix when calling scripts. Never use relative `./scripts/` paths — CWD may differ.
+
 ### Load Profile
 
 ```bash
@@ -45,15 +47,29 @@ This is the user's personalized filtering profile — their role, orgs, tiers, w
 
 Read `${CLAUDE_SKILL_ROOT}/references/digest-runner.md` for the full generation workflow. Follow it step by step — it covers fetching, triaging, fetching details, sanitization, output format, security rules, and edge cases.
 
-All scripts are at `${CLAUDE_SKILL_ROOT}/scripts/`:
+All scripts are at `${CLAUDE_SKILL_ROOT}/scripts/` — always reference them with absolute paths via `$S`:
 
 | Script | Purpose |
 |--------|---------|
 | `fetch-notifications.sh` | Fetch all GitHub notifications as JSON |
 | `fetch-details.sh` | Fetch full PR/issue context from a subject URL |
+| `fetch-details-batch.sh` | Fetch multiple PR/issue details **in parallel** (up to 5 concurrent) |
 | `fetch-comments.sh` | Fetch comment threads for a PR/issue |
 | `sanitize.sh` | Scan content for prompt injection before processing |
 | `mark-read.sh` | Mark GitHub notifications as read |
+
+### Efficient Fetching
+
+When you need details for multiple notifications, **always use batch fetching**:
+
+```bash
+BATCH=$(bash "$S/fetch-details-batch.sh" "$URL1" "$URL2" "$URL3")
+echo "$BATCH" | bash "$S/sanitize.sh"
+```
+
+This is significantly faster than calling `fetch-details.sh` one at a time. The batch script fetches up to 5 URLs in parallel and returns a JSON array.
+
+Only fall back to individual `fetch-details.sh` calls if you have 1–2 URLs or need to handle a specific error case.
 
 ### After Generating
 
@@ -62,6 +78,6 @@ All scripts are at `${CLAUDE_SKILL_ROOT}/scripts/`:
    ```bash
    jq -r '.mark_read // false' ~/.github-digest/config.json 2>/dev/null
    ```
-   If `true`, run `"$S/mark-read.sh"`
+   If `true`, run `bash "$S/mark-read.sh"`
 3. Present the full digest to the user in the conversation
 4. Mention where it's saved
