@@ -29,7 +29,7 @@ SUBJECT=$(gh api "$API_PATH" 2>&1) || {
 }
 
 # Detect type and extract relevant fields
-TYPE=$(echo "$SUBJECT" | jq -r 'if .pull_request then "pr" elif .release_id then "release" elif .number then "issue" else "other" end')
+TYPE=$(echo "$SUBJECT" | jq -r 'if .head then "pr" elif .release_id then "release" elif .number then "issue" else "other" end')
 
 case "$TYPE" in
   pr)

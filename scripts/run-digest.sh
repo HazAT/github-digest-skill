@@ -109,6 +109,10 @@ fi
 
 # ── Call claude -p ────────────────────────────────────────────────────────────
 
+# Change to repo root so Claude's allowed tools resolve ./scripts/* correctly.
+# This matters when launchd runs us with CWD=/ or $HOME.
+cd "$REPO_DIR"
+
 echo "🤖  Generating digest with Claude..."
 
 mkdir -p "$DIGESTS_DIR"

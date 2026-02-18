@@ -421,10 +421,10 @@ If yes:
 
 Find the repo directory and run:
 ```bash
-cd "$GITHUB_DIGEST_REPO" && ./github-digest --run-now
+cd "$GITHUB_DIGEST_REPO" && ./scripts/run-digest.sh
 ```
 
-(The `--run-now` flag skips the profile check and goes straight to digest generation.)
+(This runs the digest pipeline directly, using the profile you just created.)
 
 If no:
 > "No problem. When you're ready, just run `github-digest` and it'll generate your digest. Your profile is at `~/.github-digest/profile.md` if you ever want to tweak it."
