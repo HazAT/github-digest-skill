@@ -40,9 +40,9 @@ This creates a symlink at `/usr/local/bin/github-digest`. To install somewhere e
 ./install.sh ~/bin
 ```
 
-The installer also sets up a **Claude Code skill** — after install, you can say "give me my GitHub digest" in any Claude Code session and it runs the full pipeline inline.
-
 Or skip the install entirely and just run `./github-digest` directly from the repo directory.
+
+The repo also includes a **Claude Code skill** — open Claude Code in this directory and say "give me my GitHub digest" to run the pipeline inline.
 
 ---
 

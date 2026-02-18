@@ -45,34 +45,6 @@ fi
 ln -s "$BINARY" "$LINK"
 echo "Installed: $LINK → $BINARY"
 
-# ── Install Claude Code skill ─────────────────────────────────────────────────
-
-SKILL_SRC="$REPO_DIR/.claude/skills/github-digest"
-SKILL_DST="$HOME/.claude/skills/github-digest"
-
-if [[ -d "$SKILL_SRC" ]]; then
-  mkdir -p "$HOME/.claude/skills"
-  if [[ -L "$SKILL_DST" ]]; then
-    existing_target="$(readlink "$SKILL_DST")"
-    if [[ "$existing_target" == "$SKILL_SRC" ]]; then
-      echo "Skill already installed: $SKILL_DST → $SKILL_SRC"
-    else
-      echo "Replacing skill symlink: $SKILL_DST → $existing_target"
-      rm "$SKILL_DST"
-      ln -s "$SKILL_SRC" "$SKILL_DST"
-      echo "Skill installed: $SKILL_DST → $SKILL_SRC"
-    fi
-  elif [[ -d "$SKILL_DST" ]]; then
-    echo "Skill directory already exists at $SKILL_DST — skipping (remove it to re-link)"
-  else
-    ln -s "$SKILL_SRC" "$SKILL_DST"
-    echo "Skill installed: $SKILL_DST → $SKILL_SRC"
-  fi
-  echo ""
-  echo "Claude Code skill 'github-digest' is now available."
-  echo "Say \"give me my github digest\" in any Claude Code session."
-fi
-
 # ── Verify it's on PATH ───────────────────────────────────────────────────────
 
 if ! echo "$PATH" | tr ':' '\n' | grep -qx "$INSTALL_DIR"; then
