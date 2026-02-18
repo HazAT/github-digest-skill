@@ -15,7 +15,7 @@ while [[ -L "$SOURCE" ]]; do
   SOURCE="$(readlink "$SOURCE")"
   [[ "$SOURCE" == /* ]] || SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$SOURCE"
 done
-REPO_DIR="$(cd "$(dirname "$SOURCE")/.." && pwd)"
+REPO_DIR="$(cd "$(dirname "$SOURCE")/../../../.." && pwd)"
 
 PLIST_LABEL="com.github-digest.daily"
 PLIST_PATH="$HOME/Library/LaunchAgents/${PLIST_LABEL}.plist"
