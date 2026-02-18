@@ -26,23 +26,14 @@ If `gh auth status` shows you're not authenticated, run `gh auth login` first.
 
 ## Install
 
-Clone the repo and run the installer:
+Clone the repo:
 
 ```bash
 git clone https://github.com/getsentry/github-digest-cc.git
 cd github-digest-cc
-./install.sh
 ```
 
-This creates a symlink at `/usr/local/bin/github-digest`. To install somewhere else:
-
-```bash
-./install.sh ~/bin
-```
-
-Or skip the install entirely and just run `./github-digest` directly from the repo directory.
-
-The repo also includes a **Claude Code skill** — open Claude Code in this directory and say "give me my GitHub digest" to run the pipeline inline.
+That's it. Run `./github-digest` from the repo directory, or open Claude Code here and say "give me my GitHub digest" to use the built-in skill.
 
 ---
 

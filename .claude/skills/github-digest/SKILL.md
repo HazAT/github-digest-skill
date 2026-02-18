@@ -17,43 +17,24 @@ test -f ~/.github-digest/profile.md && echo "SETUP_COMPLETE" || echo "NEEDS_SETU
 
 **If `NEEDS_SETUP`:** Tell the user:
 
-> GitHub Digest isn't set up yet. Run `github-digest` in your terminal to start the interactive onboarding — it'll ask about your role and preferences, then generate your personalized profile.
->
-> If you haven't installed it yet:
-> ```
-> git clone <repo-url> ~/Projects/github-digest-cc
-> cd ~/Projects/github-digest-cc && ./install.sh
-> github-digest
-> ```
+> GitHub Digest isn't set up yet. Run `./github-digest` from this repo directory to start the interactive onboarding — it'll ask about your role and preferences, then generate your personalized profile.
 
 Stop here — don't proceed until setup is complete.
 
 **If `SETUP_COMPLETE`:** Continue to Step 2.
 
-## Step 2: Locate the Tool
+## Step 2: Locate Repo
 
-Find the github-digest repo by resolving the CLI location:
+The skill lives inside the repo, so `${CLAUDE_SKILL_ROOT}` is `.claude/skills/github-digest`. The repo root is two levels up:
 
 ```bash
-GD_BIN=$(which github-digest 2>/dev/null || echo "")
-if [[ -L "$GD_BIN" ]]; then
-  GD_BIN=$(readlink "$GD_BIN")
-fi
-if [[ -n "$GD_BIN" ]]; then
-  REPO_DIR=$(dirname "$GD_BIN")
-  echo "REPO_DIR=$REPO_DIR"
-else
-  for dir in ~/Projects/github-digest-cc ~/github-digest-cc; do
-    if [[ -x "$dir/github-digest" ]]; then
-      REPO_DIR="$dir"
-      echo "REPO_DIR=$REPO_DIR"
-      break
-    fi
-  done
-fi
+REPO_DIR="$(cd "${CLAUDE_SKILL_ROOT}/../../../" 2>/dev/null && pwd || pwd)"
+S="$REPO_DIR/scripts"
+echo "REPO_DIR=$REPO_DIR"
+ls "$S/fetch-notifications.sh" >/dev/null 2>&1 && echo "SCRIPTS_OK" || echo "SCRIPTS_MISSING"
 ```
 
-If the repo can't be found, tell the user and stop. Store `REPO_DIR` and set `S="$REPO_DIR/scripts"` — all subsequent commands use `"$S"` to invoke the fetch and sanitize tools.
+If `SCRIPTS_MISSING`, tell the user the repo structure looks broken and stop. Otherwise store `REPO_DIR` and `S` — all subsequent commands use `"$S"` to invoke the fetch and sanitize tools.
 
 ## Step 3: Verify Prerequisites
 
