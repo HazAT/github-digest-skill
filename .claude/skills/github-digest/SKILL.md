@@ -23,18 +23,16 @@ Stop here — don't proceed until setup is complete.
 
 **If `SETUP_COMPLETE`:** Continue to Step 2.
 
-## Step 2: Locate Repo
+## Step 2: Locate Tools
 
-The skill lives inside the repo, so `${CLAUDE_SKILL_ROOT}` is `.claude/skills/github-digest`. The repo root is two levels up:
+All tools are bundled inside this skill:
 
 ```bash
-REPO_DIR="$(cd "${CLAUDE_SKILL_ROOT}/../../../" 2>/dev/null && pwd || pwd)"
-S="$REPO_DIR/scripts"
-echo "REPO_DIR=$REPO_DIR"
+S="${CLAUDE_SKILL_ROOT}/scripts"
 ls "$S/fetch-notifications.sh" >/dev/null 2>&1 && echo "SCRIPTS_OK" || echo "SCRIPTS_MISSING"
 ```
 
-If `SCRIPTS_MISSING`, tell the user the repo structure looks broken and stop. Otherwise store `REPO_DIR` and `S` — all subsequent commands use `"$S"` to invoke the fetch and sanitize tools.
+If `SCRIPTS_MISSING`, tell the user the skill is incomplete and stop. Otherwise store `S` — all subsequent commands use `"$S"` to invoke the fetch and sanitize tools.
 
 ## Step 3: Verify Prerequisites
 

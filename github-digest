@@ -21,6 +21,7 @@ while [[ -L "$SOURCE" ]]; do
   [[ "$SOURCE" == /* ]] || SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$SOURCE"
 done
 REPO_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+SKILL_DIR="$REPO_DIR/.claude/skills/github-digest"
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -63,13 +64,13 @@ run_onboarding() {
   fi
 
   local system_prompt
-  system_prompt="$(cat "$REPO_DIR/prompts/onboarding.md")"
+  system_prompt="$(cat "$SKILL_DIR/references/onboarding.md")"
 
   claude \
     --system-prompt "$system_prompt" \
     --allowedTools "Bash Edit Write Read" \
     --permission-mode "acceptEdits" \
-    "Begin the GitHub Digest onboarding. The scripts directory is at $REPO_DIR/scripts/ and the user data directory is $DATA_DIR/"
+    "Begin the GitHub Digest onboarding. The scripts directory is at $SKILL_DIR/scripts/ and the user data directory is $DATA_DIR/"
 
   echo ""
 
@@ -199,7 +200,7 @@ run_status() {
 # ── Generate digest ───────────────────────────────────────────────────────────
 
 run_digest() {
-  local run_script="$REPO_DIR/scripts/run-digest.sh"
+  local run_script="$SKILL_DIR/scripts/run-digest.sh"
   if [[ ! -f "$run_script" ]]; then
     echo "Error: '$run_script' not found." >&2
     echo "Your github-digest installation may be incomplete." >&2

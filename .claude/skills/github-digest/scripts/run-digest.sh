@@ -15,14 +15,14 @@ while [[ -L "$SOURCE" ]]; do
   SOURCE="$(readlink "$SOURCE")"
   [[ "$SOURCE" == /* ]] || SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$SOURCE"
 done
-REPO_DIR="$(cd "$(dirname "$SOURCE")/.." && pwd)"
+SKILL_DIR="$(cd "$(dirname "$SOURCE")/.." && pwd)"
+SCRIPTS_DIR="$SKILL_DIR/scripts"
 
 DATA_DIR="$HOME/.github-digest"
 CONFIG="$DATA_DIR/config.json"
 PROFILE="$DATA_DIR/profile.md"
 DIGESTS_DIR="$DATA_DIR/digests"
-RUNNER_PROMPT="$REPO_DIR/prompts/digest-runner.md"
-SCRIPTS_DIR="$REPO_DIR/scripts"
+RUNNER_PROMPT="$SKILL_DIR/references/digest-runner.md"
 
 TODAY="$(date +%Y-%m-%d)"
 DIGEST_FILE="$DIGESTS_DIR/${TODAY}.md"
@@ -109,9 +109,9 @@ fi
 
 # ── Call claude -p ────────────────────────────────────────────────────────────
 
-# Change to repo root so Claude's allowed tools resolve ./scripts/* correctly.
+# Change to skill dir so Claude's allowed tools resolve correctly.
 # This matters when launchd runs us with CWD=/ or $HOME.
-cd "$REPO_DIR"
+cd "$SKILL_DIR"
 
 echo "🤖  Generating digest with Claude..."
 

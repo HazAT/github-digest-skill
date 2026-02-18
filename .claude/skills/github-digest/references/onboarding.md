@@ -330,19 +330,13 @@ EOF
 
 If `schedule_enabled` is true, install the launchd plist.
 
-Find the repo directory (the directory containing this script — you can get it from the `GITHUB_DIGEST_REPO` environment variable if set, or ask the user):
-```bash
-echo "${GITHUB_DIGEST_REPO:-unknown}"
-```
+The scripts directory was provided in the initial message. Derive the repo root from it (it's the parent's parent's parent of the scripts dir — the scripts are inside `.claude/skills/github-digest/scripts/`).
 
-If `GITHUB_DIGEST_REPO` is set, use it. Otherwise:
-> "What's the full path to your github-digest-cc repo? For example: `/Users/yourname/Projects/github-digest-cc`"
-
-Then create the plist. Replace `[TIME]` with the configured time (e.g. `08:00` → Hour: 8, Minute: 0), `[REPO_DIR]` with the repo path, and `[USERNAME]` with their system username (`whoami`):
+Create the plist. Replace `[TIME]` with the configured time (e.g. `08:00` → Hour: 8, Minute: 0), `[REPO_DIR]` with the repo path, and `[USERNAME]` with their system username (`whoami`):
 
 ```bash
 USERNAME=$(whoami)
-REPO_DIR="${GITHUB_DIGEST_REPO}"
+# REPO_DIR should be resolved from the scripts directory provided at the start
 SCHEDULE_TIME="[time from config]"
 HOUR=$(echo "$SCHEDULE_TIME" | cut -d: -f1 | sed 's/^0//')
 MINUTE=$(echo "$SCHEDULE_TIME" | cut -d: -f2 | sed 's/^0//')
@@ -381,8 +375,8 @@ Write the plist:
     <string>/Users/[USERNAME]</string>
     <key>PATH</key>
     <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin</string>
-    <key>GITHUB_DIGEST_REPO</key>
-    <string>[REPO_DIR]</string>
+    <key>GITHUB_DIGEST_SKILL_DIR</key>
+    <string>[REPO_DIR]/.claude/skills/github-digest</string>
   </dict>
 </dict>
 </plist>
@@ -419,12 +413,12 @@ Wrap up warmly:
 If yes:
 > "On it — this might take a minute while I fetch and process your notifications."
 
-Find the repo directory and run:
+Run the digest using the scripts directory from the initial message:
 ```bash
-cd "$GITHUB_DIGEST_REPO" && ./scripts/run-digest.sh
+"$SCRIPTS_DIR/run-digest.sh"
 ```
 
-(This runs the digest pipeline directly, using the profile you just created.)
+(This runs the digest pipeline directly, using the profile you just created. `$SCRIPTS_DIR` is the scripts path provided at the start of the session.)
 
 If no:
 > "No problem. When you're ready, just run `github-digest` and it'll generate your digest. Your profile is at `~/.github-digest/profile.md` if you ever want to tweak it."

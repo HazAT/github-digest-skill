@@ -181,6 +181,20 @@ This is usually a GitHub SSO issue. If the digest mentions partial results or SS
 
 ---
 
+## Project Structure
+
+Everything lives inside the Claude Code skill at `.claude/skills/github-digest/`:
+
+```
+.claude/skills/github-digest/
+├── SKILL.md              # Claude Code skill — the inline integration
+├── scripts/              # All shell scripts (fetch, sanitize, schedule)
+└── references/           # Prompts (onboarding, digest runner template)
+
+github-digest             # CLI entry point (thin wrapper)
+README.md
+```
+
 ## Contributing
 
-This is a Sentry internal tool but PRs are welcome. The main entry point is the `github-digest` script; prompts live in `prompts/`; data-fetching scripts live in `scripts/`.
+This is a Sentry internal tool but PRs are welcome. The skill is self-contained in `.claude/skills/github-digest/`; the `github-digest` script at the root is just a CLI wrapper.
