@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+# github-digest — The single entry point for GitHub Digest
+#
+# First run (no profile): interactive Claude onboarding
+# Subsequent runs: generate today's digest
+#
+# Flags:
+#   --setup         Force re-run onboarding
+#   --view [date]   View a digest (YYYY-MM-DD, or today/latest)
+#   --status        Show config, schedule, last digest
+#   --help          Show usage
+
+set -euo pipefail
+
+# ── Resolve repo dir (follow symlinks) ───────────────────────────────────────
+
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE" ]]; do
+  SOURCE="$(readlink "$SOURCE")"
+  # Handle relative symlinks
+  [[ "$SOURCE" == /* ]] || SOURCE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$SOURCE"
+done
+REPO_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+
+DATA_DIR="$HOME/.github-digest"
+PROFILE="$DATA_DIR/profile.md"
+CONFIG="$DATA_DIR/config.json"
+DIGESTS_DIR="$DATA_DIR/digests"
+PLIST="$HOME/Library/LaunchAgents/com.github-digest.daily.plist"
+
+# ── Usage ─────────────────────────────────────────────────────────────────────
+
+usage() {
+  cat <<EOF
+github-digest — Daily GitHub digest powered by Claude
+
+Usage:
+  github-digest               Generate today's digest (or run onboarding on first use)
+  github-digest --setup       Re-run onboarding to update your profile/schedule
+  github-digest --view [DATE] View a digest (DATE: YYYY-MM-DD, default: today or latest)
+  github-digest --status      Show configuration, schedule, and last digest info
+  github-digest --help        Show this help
+
+Data directory: $DATA_DIR
+Repo:           $REPO_DIR
+EOF
+}
+
+# ── Onboarding ────────────────────────────────────────────────────────────────
+
+run_onboarding() {
+  echo "🚀  Starting GitHub Digest onboarding..."
+  echo ""
+
+  mkdir -p "$DATA_DIR"
+
+  if ! command -v claude &>/dev/null; then
+    echo "Error: 'claude' CLI not found." >&2
+    echo "Install Claude Code: https://claude.ai/code" >&2
+    exit 1
+  fi
+
+  local system_prompt
+  system_prompt="$(cat "$REPO_DIR/prompts/onboarding.md")"
+
+  claude \
+    --system-prompt "$system_prompt" \
+    --allowedTools "Bash Edit Write Read" \
+    --permission-mode "acceptEdits" \
+    "Begin the GitHub Digest onboarding. The scripts directory is at $REPO_DIR/scripts/ and the user data directory is $DATA_DIR/"
+
+  echo ""
+
+  if [[ -f "$PROFILE" ]]; then
+    echo "✅  Onboarding complete. Your profile is saved at $PROFILE"
+    echo "    Run 'github-digest' any time to generate your digest."
+  else
+    echo "⚠️   Onboarding ended but no profile was saved at $PROFILE" >&2
+    echo "    Run 'github-digest --setup' to try again." >&2
+    exit 1
+  fi
+}
+
+# ── View a digest ─────────────────────────────────────────────────────────────
+
+run_view() {
+  local date_arg="${1:-}"
+  local digest_file=""
+
+  if [[ -n "$date_arg" ]]; then
+    digest_file="$DIGESTS_DIR/${date_arg}.md"
+    if [[ ! -f "$digest_file" ]]; then
+      echo "Error: No digest found for $date_arg (looked in $digest_file)" >&2
+      exit 1
+    fi
+  else
+    # Try today first, then fall back to latest
+    local today
+    today="$(date +%Y-%m-%d)"
+    if [[ -f "$DIGESTS_DIR/${today}.md" ]]; then
+      digest_file="$DIGESTS_DIR/${today}.md"
+    elif [[ -d "$DIGESTS_DIR" ]]; then
+      digest_file="$(ls -t "$DIGESTS_DIR"/*.md 2>/dev/null | head -1 || true)"
+      if [[ -z "$digest_file" ]]; then
+        echo "No digests found in $DIGESTS_DIR" >&2
+        echo "Run 'github-digest' to generate one." >&2
+        exit 1
+      fi
+    else
+      echo "No digests found. Run 'github-digest' to generate one." >&2
+      exit 1
+    fi
+  fi
+
+  echo "📄  $digest_file"
+  echo ""
+
+  # Use pager if stdout is a terminal
+  if [[ -t 1 ]]; then
+    local pager="${PAGER:-}"
+    if [[ -z "$pager" ]]; then
+      if command -v less &>/dev/null; then
+        pager="less -R"
+      elif command -v more &>/dev/null; then
+        pager="more"
+      fi
+    fi
+    if [[ -n "$pager" ]]; then
+      $pager "$digest_file"
+      return
+    fi
+  fi
+
+  cat "$digest_file"
+}
+
+# ── Status ────────────────────────────────────────────────────────────────────
+
+run_status() {
+  echo "── GitHub Digest Status ──────────────────────────────────────"
+  echo ""
+
+  # Onboarding
+  if [[ -f "$PROFILE" ]]; then
+    echo "✅  Onboarded:    yes"
+    echo "    Profile:      $PROFILE"
+  else
+    echo "❌  Onboarded:    no (run 'github-digest' to start onboarding)"
+  fi
+
+  # Config
+  if [[ -f "$CONFIG" ]]; then
+    echo "    Config:       $CONFIG"
+    local schedule_time=""
+    schedule_time="$(jq -r '.schedule_time // empty' "$CONFIG" 2>/dev/null || true)"
+    [[ -n "$schedule_time" ]] && echo "    Schedule:     $schedule_time"
+  fi
+
+  # Last digest
+  echo ""
+  if [[ -d "$DIGESTS_DIR" ]]; then
+    local latest
+    latest="$(ls -t "$DIGESTS_DIR"/*.md 2>/dev/null | head -1 || true)"
+    if [[ -n "$latest" ]]; then
+      local basename
+      basename="$(basename "$latest" .md)"
+      echo "📅  Last digest:  $basename"
+      echo "    File:         $latest"
+    else
+      echo "📅  Last digest:  none"
+    fi
+  else
+    echo "📅  Last digest:  none"
+  fi
+
+  # Schedule (launchd)
+  echo ""
+  if [[ -f "$PLIST" ]]; then
+    local label
+    label="$(basename "$PLIST" .plist)"
+    echo "⏰  Schedule:     launchd plist installed"
+    echo "    Plist:        $PLIST"
+    if launchctl list "$label" &>/dev/null 2>&1; then
+      echo "    Status:       loaded ✅"
+    else
+      echo "    Status:       not loaded (run: launchctl load $PLIST)"
+    fi
+  else
+    echo "⏰  Schedule:     not configured (set up during onboarding)"
+  fi
+
+  echo ""
+  echo "    Repo:         $REPO_DIR"
+  echo "    Data:         $DATA_DIR"
+}
+
+# ── Generate digest ───────────────────────────────────────────────────────────
+
+run_digest() {
+  local run_script="$REPO_DIR/scripts/run-digest.sh"
+  if [[ ! -f "$run_script" ]]; then
+    echo "Error: '$run_script' not found." >&2
+    echo "Your github-digest installation may be incomplete." >&2
+    exit 1
+  fi
+  exec "$run_script"
+}
+
+# ── Parse flags ───────────────────────────────────────────────────────────────
+
+MODE="default"
+VIEW_DATE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --setup)
+      MODE="setup"
+      shift
+      ;;
+    --view)
+      MODE="view"
+      shift
+      # Optional date argument
+      if [[ $# -gt 0 && "$1" != --* ]]; then
+        VIEW_DATE="$1"
+        shift
+      fi
+      ;;
+    --status)
+      MODE="status"
+      shift
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Run 'github-digest --help' for usage." >&2
+      exit 1
+      ;;
+  esac
+done
+
+# ── Dispatch ──────────────────────────────────────────────────────────────────
+
+case "$MODE" in
+  setup)
+    run_onboarding
+    ;;
+  view)
+    run_view "$VIEW_DATE"
+    ;;
+  status)
+    run_status
+    ;;
+  default)
+    if [[ ! -f "$PROFILE" ]]; then
+      run_onboarding
+    else
+      run_digest
+    fi
+    ;;
+esac
