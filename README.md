@@ -2,6 +2,8 @@
 
 Daily AI-powered summary of your GitHub notifications, filtered to what matters for your role.
 
+> **Quick install:** Open Claude Code and paste the contents of [`INSTALL.md`](INSTALL.md) — it will clone, install, and offer to run your first digest.
+
 Fetches notifications locally via `gh`, runs them through Claude, saves a markdown digest. A background job generates it daily — when you ask for it, it's already there.
 
 ## Install
