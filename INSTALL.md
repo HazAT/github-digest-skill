@@ -5,20 +5,20 @@ Clone the GitHub Digest repo and install it locally. Here's what to do:
 1. Clone the repo to a permanent location (it needs to stay here — the scheduled job references it):
 
 ```bash
-git clone https://github.com/getsentry/github-digest-cc.git ~/.github-digest-cc
+git clone https://github.com/HazAT/github-digest-skill.git ~/.github-digest-skill
 ```
 
 2. Symlink the CLI so it's available everywhere:
 
 ```bash
-ln -sf ~/.github-digest-cc/github-digest /usr/local/bin/github-digest
+ln -sf ~/.github-digest-skill/github-digest /usr/local/bin/github-digest
 ```
 
 3. Copy the Claude Code skill into the current project so it's available here:
 
 ```bash
 mkdir -p .claude/skills
-cp -r ~/.github-digest-cc/.claude/skills/github-digest .claude/skills/github-digest
+cp -r ~/.github-digest-skill/.claude/skills/github-digest .claude/skills/github-digest
 ```
 
 4. Verify everything is in place:

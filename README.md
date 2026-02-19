@@ -9,8 +9,8 @@ Fetches notifications locally via `gh`, runs them through Claude, saves a markdo
 ## Install
 
 ```bash
-git clone https://github.com/getsentry/github-digest-cc.git
-cd github-digest-cc
+git clone https://github.com/HazAT/github-digest-skill.git
+cd github-digest-skill
 ```
 
 Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude`) and [GitHub CLI](https://cli.github.com) (`gh`). Both will be checked on first run — if anything's missing, you'll be offered to install it.
