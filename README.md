@@ -2,35 +2,15 @@
 
 Daily AI-powered summary of your GitHub notifications, filtered to what matters for your role.
 
-> **Quick install:** Open Claude Code and paste the contents of [`INSTALL.md`](INSTALL.md) — it will clone, install, and offer to run your first digest.
-
-Fetches notifications locally via `gh`, runs them through Claude, saves a markdown digest. A background job generates it daily — when you ask for it, it's already there.
-
 ## Install
 
-```bash
-git clone https://github.com/HazAT/github-digest-skill.git
-cd github-digest-skill
+Tell your agent:
+
+```
+Download and follow: https://raw.githubusercontent.com/HazAT/github-digest-skill/refs/heads/main/INSTALL.md
 ```
 
-Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (`claude`) and [GitHub CLI](https://cli.github.com) (`gh`). Both will be checked on first run — if anything's missing, you'll be offered to install it.
-
-## Usage
-
-**From Claude Code** (recommended) — open the repo and say:
-
-> "github digest"
-
-If it's your first run, a short setup conversation asks your role and org. After that, it checks for today's digest file and shows it instantly — or generates a fresh one if needed.
-
-**From the terminal:**
-
-```bash
-./github-digest              # Generate digest (or onboard on first run)
-./github-digest --setup      # Redo onboarding
-./github-digest --view       # View today's or most recent digest
-./github-digest --status     # Show config and schedule info
-```
+That's it. It will clone, install, and offer to run your first digest.
 
 ## How It Works
 
@@ -41,24 +21,6 @@ If it's your first run, a short setup conversation asks your role and org. After
 
 A launchd job runs this daily in the background. When you ask for your digest, the skill serves the pre-generated file.
 
-## Configuration
+## License
 
-All user data lives in `~/.github-digest/`:
-
-| File | Purpose |
-|------|---------|
-| `profile.md` | Your filtering rules — role, orgs, what matters. Edit anytime. |
-| `config.json` | Schedule time, mark-as-read preference |
-| `digests/` | One markdown file per day |
-
-To redo setup: `./github-digest --setup` or tell Claude "redo my digest setup".
-
-## Project Structure
-
-```
-github-digest              # CLI entry point
-.claude/skills/github-digest/
-├── SKILL.md               # Claude Code skill definition
-├── references/            # Onboarding + digest runner prompts
-└── scripts/               # fetch, sanitize, schedule, batch-fetch
-```
+MIT
