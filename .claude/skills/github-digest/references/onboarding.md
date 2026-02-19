@@ -31,9 +31,9 @@ Greet the user and ask for the essential info **all in one go**:
 > 2. **Your work org(s)** — e.g. `getsentry`, plus your GitHub username for personal repos
 > 3. **Anything you specifically care about or want to skip?** (optional — I'll pick smart defaults based on your role)
 >
-> For scheduling, I'll default to **weekday mornings at 8am** with macOS notifications. Let me know if you want to change that."
+> For scheduling, I'll set up a **background job that runs weekday mornings at 8am** so your digest is ready when you ask for it. Let me know if you want a different time."
 
-This covers Steps 3a, 3b, 3c, 3d, and 4 from the old flow in a single exchange. Most users will answer all three in one message.
+This covers role, orgs, preferences, and scheduling in a single exchange. Most users will answer all three in one message.
 
 ---
 
@@ -47,7 +47,7 @@ Based on their answer, present a **compact summary** of what you'll set up and a
 > - **Personal repos:** `HazAT` (show everything, low volume)
 > - **Surface:** direct review requests, breaking changes, heated discussions, RFCs, incidents, large PRs with 50+ comments
 > - **Skip:** bot PRs, dependency bumps, CI noise, release notes, passing cc mentions
-> - **Schedule:** weekdays at 8am, macOS notifications, don't mark as read
+> - **Schedule:** background job runs weekdays at 8am, digest ready when you ask
 >
 > Sound good, or want to tweak anything?"
 
@@ -82,7 +82,6 @@ Write `~/.github-digest/config.json`:
   "schedule_enabled": true,
   "schedule_time": "08:00",
   "schedule_days": "weekdays",
-  "notify": true,
   "mark_read": false,
   "onboarding_complete": true,
   "github_username": "their-username"
@@ -104,7 +103,7 @@ Tell the user what was created:
 > "All set:
 > - **Profile** → `~/.github-digest/profile.md`
 > - **Config** → `~/.github-digest/config.json`
-> - **Schedule** → weekdays at 8am via launchd
+> - **Schedule** → background job runs weekdays at 8am via launchd — your digest will be waiting when you ask for it
 >
 > **Want me to generate your first digest right now?**"
 

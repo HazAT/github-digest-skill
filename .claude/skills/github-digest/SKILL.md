@@ -18,11 +18,28 @@ test -f ~/.github-digest/profile.md && echo "READY" || echo "NEEDS_SETUP"
 | State | Action |
 |-------|--------|
 | `NEEDS_SETUP` | → Read `${CLAUDE_SKILL_ROOT}/references/onboarding.md` and follow it to set up the user's profile. The scripts directory is `${CLAUDE_SKILL_ROOT}/scripts/`. The user data directory is `~/.github-digest/`. |
-| `READY` | → Continue to **Run Digest** below |
+| `READY` | → Continue to **Check for Today's Digest** below |
 
 If the user explicitly asks to reconfigure (e.g., "redo setup", "change my digest settings"), treat as `NEEDS_SETUP` regardless of state.
 
-## Run Digest
+## Check for Today's Digest
+
+Before doing any work, check if today's digest already exists (the scheduled job may have generated it):
+
+```bash
+TODAY=$(date +%Y-%m-%d)
+DIGEST="$HOME/.github-digest/digests/${TODAY}.md"
+test -f "$DIGEST" && echo "EXISTS" || echo "MISSING"
+```
+
+| State | Action |
+|-------|--------|
+| `EXISTS` | → Read the file with `cat "$DIGEST"` and present it to the user. Done — no fetching needed. |
+| `MISSING` | → Continue to **Generate Digest** below |
+
+If the user explicitly asks to regenerate (e.g., "refresh digest", "run it again", "get fresh notifications"), skip the file check and generate fresh.
+
+## Generate Digest
 
 ### Prerequisites
 

@@ -55,11 +55,9 @@ fi
 # ── Read config (optional — use defaults if missing) ──────────────────────────
 
 MARK_READ="false"
-NOTIFY="false"
 
 if [[ -f "$CONFIG" ]]; then
   MARK_READ="$(jq -r '.mark_read // false' "$CONFIG" 2>/dev/null || echo "false")"
-  NOTIFY="$(jq -r '.notify // false' "$CONFIG" 2>/dev/null || echo "false")"
 fi
 
 # ── Build combined system prompt ──────────────────────────────────────────────
@@ -144,13 +142,6 @@ if [[ "$MARK_READ" == "true" ]]; then
   if ! "$SCRIPTS_DIR/mark-read.sh" > /dev/null; then
     echo "Warning: Failed to mark notifications as read." >&2
   fi
-fi
-
-# ── macOS notification ────────────────────────────────────────────────────────
-
-if [[ "$NOTIFY" == "true" ]]; then
-  SURFACED="$(echo "$DIGEST_OUTPUT" | grep -c '^###' 2>/dev/null || echo "some")"
-  osascript -e "display notification \"${SURFACED} items in today's digest\" with title \"GitHub Digest\" sound name \"default\"" 2>/dev/null || true
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
