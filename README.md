@@ -9,7 +9,7 @@ Fetches notifications locally via `gh`, runs them through Claude, saves a markdo
 Tell your agent:
 
 ```
-Download and follow: https://raw.githubusercontent.com/HazAT/github-digest-skill/refs/heads/main/INSTALL.md
+read and follow: https://github.com/HazAT/github-digest-skill/blob/main/INSTALL.md
 ```
 
 That's it. It will clone, install, and run the onboarding.
