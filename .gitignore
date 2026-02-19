@@ -1,23 +1,14 @@
-# macOS
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V7
 .Trashes
-ehthumbs.db
 Thumbs.db
 
-# Logs and temporary files
-logs/
-tmp/
 *.log
-
-# Editor artifacts
-.vscode/
-.idea/
 *.swp
 *.swo
 *~
 
-# User data lives in ~/.github-digest, not the repo
-# (listed here as a reminder — it's outside the tree anyway)
+.vscode/
+.idea/
+.pi/
