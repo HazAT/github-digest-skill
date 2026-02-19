@@ -7,6 +7,25 @@ description: Generate a personalized GitHub notification digest, or set up the t
 
 Personalized GitHub notification digests — fetched locally, analyzed by Claude, filtered to what matters for your role.
 
+## Locate Skill Root
+
+First, find where the skill is installed. Check both locations — project-local and user install:
+
+```bash
+if [[ -n "${CLAUDE_SKILL_ROOT:-}" ]] && [[ -d "${CLAUDE_SKILL_ROOT}/scripts" ]]; then
+  echo "SKILL_ROOT=${CLAUDE_SKILL_ROOT}"
+elif [[ -d "$HOME/.github-digest-skill/.claude/skills/github-digest/scripts" ]]; then
+  echo "SKILL_ROOT=$HOME/.github-digest-skill/.claude/skills/github-digest"
+else
+  echo "NOT_FOUND"
+fi
+```
+
+If `NOT_FOUND`, tell the user to install first:
+> "GitHub Digest isn't installed. Run this to install: `git clone https://github.com/HazAT/github-digest-skill.git ~/.github-digest-skill`"
+
+Use the resolved `SKILL_ROOT` for all paths below. Set `S="${SKILL_ROOT}/scripts"`.
+
 ## Determine Mode
 
 Check the current state silently:
@@ -17,7 +36,7 @@ test -f ~/.github-digest/profile.md && echo "READY" || echo "NEEDS_SETUP"
 
 | State | Action |
 |-------|--------|
-| `NEEDS_SETUP` | → Read `${CLAUDE_SKILL_ROOT}/references/onboarding.md` and follow it to set up the user's profile. The scripts directory is `${CLAUDE_SKILL_ROOT}/scripts/`. The user data directory is `~/.github-digest/`. |
+| `NEEDS_SETUP` | → Read `${SKILL_ROOT}/references/onboarding.md` and follow it to set up the user's profile. The scripts directory is `${SKILL_ROOT}/scripts/`. The user data directory is `~/.github-digest/`. |
 | `READY` | → Continue to **Check for Today's Digest** below |
 
 If the user explicitly asks to reconfigure (e.g., "redo setup", "change my digest settings"), treat as `NEEDS_SETUP` regardless of state.
@@ -44,13 +63,10 @@ If the user explicitly asks to regenerate (e.g., "refresh digest", "run it again
 ### Prerequisites
 
 ```bash
-S="${CLAUDE_SKILL_ROOT}/scripts"
 gh auth status 2>&1
 ```
 
 If `gh` is not authenticated, guide the user through `gh auth login` and stop.
-
-**Important:** Always use `$S` (resolved from `${CLAUDE_SKILL_ROOT}/scripts`) as the absolute path prefix when calling scripts. Never use relative `./scripts/` paths — CWD may differ.
 
 ### Load Profile
 
@@ -62,9 +78,9 @@ This is the user's personalized filtering profile — their role, orgs, tiers, w
 
 ### Generate
 
-Read `${CLAUDE_SKILL_ROOT}/references/digest-runner.md` for the full generation workflow. Follow it step by step — it covers fetching, triaging, fetching details, sanitization, output format, security rules, and edge cases.
+Read `${SKILL_ROOT}/references/digest-runner.md` for the full generation workflow. Follow it step by step — it covers fetching, triaging, fetching details, sanitization, output format, security rules, and edge cases.
 
-All scripts are at `${CLAUDE_SKILL_ROOT}/scripts/` — always reference them with absolute paths via `$S`:
+All scripts are at `$S` (resolved earlier):
 
 | Script | Purpose |
 |--------|---------|

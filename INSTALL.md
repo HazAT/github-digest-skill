@@ -1,33 +1,19 @@
 <!-- Copy everything below this line and paste it into Claude Code -->
 
-Clone the GitHub Digest repo and install it locally. Here's what to do:
+Install GitHub Digest — a daily AI-powered summary of your GitHub notifications.
 
-1. Clone the repo to a permanent location (it needs to stay here — the scheduled job references it):
+1. Clone the repo:
 
 ```bash
 git clone https://github.com/HazAT/github-digest-skill.git ~/.github-digest-skill
 ```
 
-2. Symlink the CLI so it's available everywhere:
+2. Now read the skill file and follow it (this starts the onboarding):
 
 ```bash
-ln -sf ~/.github-digest-skill/github-digest /usr/local/bin/github-digest
+cat ~/.github-digest-skill/.claude/skills/github-digest/SKILL.md
 ```
 
-3. Copy the Claude Code skill into the current project so it's available here:
+The scripts directory is `~/.github-digest-skill/.claude/skills/github-digest/scripts/`. The user data directory is `~/.github-digest/`.
 
-```bash
-mkdir -p .claude/skills
-cp -r ~/.github-digest-skill/.claude/skills/github-digest .claude/skills/github-digest
-```
-
-4. Verify everything is in place:
-
-```bash
-test -x /usr/local/bin/github-digest && echo "CLI: ok" || echo "CLI: missing"
-test -f .claude/skills/github-digest/SKILL.md && echo "Skill: ok" || echo "Skill: missing"
-```
-
-After all four steps succeed, ask the user: **"GitHub Digest is installed. Want me to run the setup and generate your first digest?"**
-
-If they say yes, invoke the `github-digest` skill.
+Follow the skill instructions. If the state is `NEEDS_SETUP`, read the onboarding reference at `~/.github-digest-skill/.claude/skills/github-digest/references/onboarding.md` and run through it.
