@@ -1,6 +1,6 @@
 ---
 name: github-digest
-description: Generate a personalized GitHub notification digest, or set up the tool for first-time users. Use when asked for "github digest", "daily digest", "github notifications", "check my notifications", "what are my github notifications", "morning digest", "run digest", "notification summary", "what did I miss on github", "set up github digest", or "configure my digest".
+description: Generate a personalized GitHub notification digest, or set up the tool for first-time users. Use when asked for "github digest", "daily digest", "github notifications", "check my notifications", "what are my github notifications", "morning digest", "run digest", "notification summary", "what did I miss on github", "set up github digest", "configure my digest", "uninstall github digest", or "remove github digest".
 ---
 
 # GitHub Digest
@@ -40,6 +40,8 @@ test -f ~/.github-digest/profile.md && echo "READY" || echo "NEEDS_SETUP"
 | `READY` | → Continue to **Check for Today's Digest** below |
 
 If the user explicitly asks to reconfigure (e.g., "redo setup", "change my digest settings"), treat as `NEEDS_SETUP` regardless of state.
+
+If the user asks to uninstall (e.g., "uninstall github digest", "remove github digest"), read `${SKILL_ROOT}/references/uninstall.md` and follow it.
 
 ## Check for Today's Digest
 
